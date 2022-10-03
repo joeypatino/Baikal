@@ -47,6 +47,7 @@ class PDOBasicAuth extends \Sabre\DAV\Auth\Backend\AbstractBasic {
      * @param string $tableName The PDO table name to use
      */
     function __construct(\PDO $pdo, $authRealm, $tableName = 'users') {
+        error_log("PDOBasicAuth.__construct");
         $this->pdo = $pdo;
         $this->tableName = $tableName;
         $this->authRealm = $authRealm;
@@ -64,6 +65,7 @@ class PDOBasicAuth extends \Sabre\DAV\Auth\Backend\AbstractBasic {
      * @return bool
      */
     function validateUserPass($username, $password) {
+        error_log("PDOBasicAuth.validateUserPass");
         $stmt = $this->pdo->prepare('SELECT username, digesta1 FROM ' . $this->tableName . ' WHERE username = ?');
         $stmt->execute([$username]);
         $result = $stmt->fetchAll();

@@ -28,6 +28,7 @@
 namespace Baikal\Core;
 
 use PDO;
+use Sabre\DAV\Auth\Plugin;
 use Symfony\Component\Yaml\Yaml;
 
 /**
@@ -39,7 +40,8 @@ use Symfony\Component\Yaml\Yaml;
  * @author Evert Pot (http://evertpot.com/)
  * @license http://sabre.io/license/ GPLv2
  */
-class Server {
+class Server
+{
     /**
      * Is CalDAV enabled?
      *
@@ -99,7 +101,8 @@ class Server {
      * @param PDO $pdo
      * @param string $baseUri
      */
-    function __construct($enableCalDAV, $enableCardDAV, $authType, $authRealm, PDO $pdo, $baseUri) {
+    function __construct($enableCalDAV, $enableCardDAV, $authType, $authRealm, PDO $pdo, $baseUri)
+    {
         $this->enableCalDAV = $enableCalDAV;
         $this->enableCardDAV = $enableCardDAV;
         $this->authType = $authType;
@@ -115,7 +118,8 @@ class Server {
      *
      * @return void
      */
-    function start() {
+    function start()
+    {
         $this->server->exec();
     }
 
@@ -124,7 +128,8 @@ class Server {
      *
      * @return void
      */
-    protected function initServer() {
+    protected function initServer()
+    {
         try {
             $config = Yaml::parseFile(PROJECT_PATH_CONFIG . "baikal.yaml");
         } catch (\Exception $e) {
@@ -139,6 +144,7 @@ class Server {
             $authBackend = new \Sabre\DAV\Auth\Backend\PDO($this->pdo);
             $authBackend->setRealm($this->authRealm);
         }
+
         $principalBackend = new \Sabre\DAVACL\PrincipalBackend\PDO($this->pdo);
 
         $nodes = [
@@ -156,7 +162,22 @@ class Server {
         $this->server = new \Sabre\DAV\Server($nodes);
         $this->server->setBaseUri($this->baseUri);
 
-        $this->server->addPlugin(new \Sabre\DAV\Auth\Plugin($authBackend, $this->authRealm));
+        $backendplugin = new Plugin($authBackend);
+        if (isset($config['system']["authorization_endpoint"]) && $config['system']["authorization_endpoint"] !== "") {
+            $backendplugin->addBackend(new RemoteAuth($config['system']["authorization_endpoint"]));
+        }
+        if (isset($config['system']["bearer_token_secret"]) && $config['system']["bearer_token_secret"] !== "") {
+            $backendplugin->addBackend(new BearerTokenAuth($config['system']["bearer_token_secret"]));
+        }
+        $this->server->addPlugin($backendplugin);
+//        $this->server->addPlugin(new Plugin($authBackend));
+//        if (isset($config['system']["authorization_endpoint"]) && $config['system']["authorization_endpoint"] !== "") {
+//            $this->server->addPlugin(new Plugin(new RemoteAuth($config['system']["authorization_endpoint"])));
+//        }
+//        if (isset($config['system']["bearer_token_secret"]) && $config['system']["bearer_token_secret"] !== "") {
+//            $this->server->addPlugin(new Plugin(new BearerTokenAuth($config['system']["bearer_token_secret"])));
+//        }
+
         $this->server->addPlugin(new \Sabre\DAVACL\Plugin());
         $this->server->addPlugin(new \Sabre\DAV\Browser\Plugin());
 
@@ -190,7 +211,8 @@ class Server {
      *
      * @return void
      */
-    function exception($e) {
+    function exception($e)
+    {
         if ($e instanceof \Sabre\DAV\Exception\NotAuthenticated) {
             // Applications may make their first call without auth so don't log these attempts
             // Pattern from sabre/dav/lib/DAV/Auth/Backend/AbstractDigest.php

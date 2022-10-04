@@ -170,13 +170,6 @@ class Server
             $backendplugin->addBackend(new BearerTokenAuth($config['system']["bearer_token_secret"]));
         }
         $this->server->addPlugin($backendplugin);
-//        $this->server->addPlugin(new Plugin($authBackend));
-//        if (isset($config['system']["authorization_endpoint"]) && $config['system']["authorization_endpoint"] !== "") {
-//            $this->server->addPlugin(new Plugin(new RemoteAuth($config['system']["authorization_endpoint"])));
-//        }
-//        if (isset($config['system']["bearer_token_secret"]) && $config['system']["bearer_token_secret"] !== "") {
-//            $this->server->addPlugin(new Plugin(new BearerTokenAuth($config['system']["bearer_token_secret"])));
-//        }
 
         $this->server->addPlugin(new \Sabre\DAVACL\Plugin());
         $this->server->addPlugin(new \Sabre\DAV\Browser\Plugin());

@@ -45,8 +45,11 @@ class RemoteAuth extends \Sabre\DAV\Auth\Backend\AbstractBasic
             return false;
         }
         $obj = json_decode($result, true);
-        $this->username = $obj['user'];
-        return true;
+        if (!empty($obj['result']['user'])) {
+            $this->username = $obj['result']['user'];
+            return true;
+        }
+        return false;
     }
 
     function check(RequestInterface $request, ResponseInterface $response)
